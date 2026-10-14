@@ -1,0 +1,36 @@
+# Node.js
+**/node_modules/
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+
+# Android build outputs & cache
+**/android/build/
+**/android/app/build/
+**/.gradle/
+**/local.properties
+**/*.iml
+**/*.hprof
+**/.cxx/
+**/*.keystore
+!**/debug.keystore
+**/.kotlin/
+
+# iOS build & pods
+**/ios/build/
+**/ios/Pods/
+**/DerivedData/
+**/*.xcworkspace/xcuserdata/
+**/*.xcodeproj/xcuserdata/
+
+# React Native & Metro
+**/*.jsbundle
+**/.metro-health-check*
+
+# OS & IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
