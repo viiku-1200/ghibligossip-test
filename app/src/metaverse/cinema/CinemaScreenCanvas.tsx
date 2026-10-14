@@ -22,39 +22,12 @@ import {
 } from 'react-native';
 import { WebView } from 'react-native-webview';
 
+import YouTubeTheaterPlayer from './YouTubeTheaterPlayer';
+
 const { width: SW } = Dimensions.get('window');
 const SCREEN_WIDTH = SW * 0.92;
 // Leave at least 200px of inner height for YouTube's embedded player viewport.
 const SCREEN_HEIGHT = Math.max(SCREEN_WIDTH * (9 / 16), 204);
-
-// YouTube HTML5 Player template with referrer policy to prevent Error 153
-const getYouTubeHtml = (videoId: string, isPlaying: boolean) => `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; background-color:#000; }
-    html, body { width:100%; height:100%; overflow:hidden; background:#000; }
-    iframe { width:100%; height:100%; border:none; display:block; }
-  </style>
-</head>
-<body>
-  <iframe
-    id="ytplayer"
-    type="text/html"
-    width="100%"
-    height="100%"
-    src="https://www.youtube.com/embed/${videoId}?autoplay=${isPlaying ? 1 : 0}&controls=1&playsinline=1&modestbranding=1&rel=0&enablejsapi=1"
-    frameborder="0"
-    referrerpolicy="strict-origin-when-cross-origin"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowfullscreen
-  ></iframe>
-</body>
-</html>
-`;
 
 export interface CinemaState {
   title: string;
@@ -346,63 +319,10 @@ export default function CinemaScreenCanvas({
         {/* The 16:9 Movie Screen Surface */}
         {state.sourceType === 'web' && state.youtubeId ? (
           <View style={styles.screenSurface}>
-            <View style={styles.filmCanvas}>
-              <View style={styles.filmColorBackdrop}>
-                <View style={styles.filmScanlines} />
-                <View style={styles.filmCenterVisual}>
-                  <View style={styles.youtubeDisplay}>
-                    {state.isPlaying ? (
-                      <WebView
-                        key={state.youtubeId}
-                        source={{
-                          html: getYouTubeHtml(state.youtubeId, true),
-                          baseUrl: 'https://www.youtube.com',
-                        }}
-                        style={styles.webView}
-                        allowsInlineMediaPlayback={true}
-                        allowsFullscreenVideo={true}
-                        mediaPlaybackRequiresUserAction={false}
-                        javaScriptEnabled={true}
-                        domStorageEnabled={true}
-                        thirdPartyCookiesEnabled={true}
-                        sharedCookiesEnabled={true}
-                        androidLayerType="hardware"
-                        androidHardwareAccelerationDisabled={false}
-                        mixedContentMode="always"
-                        originWhitelist={['*']}
-                      />
-                    ) : (
-                      <TouchableOpacity
-                        style={styles.youtubeDisplay}
-                        onPress={onTogglePlay}
-                        activeOpacity={0.8}
-                      >
-                        <Image
-                          source={{
-                            uri: `https://img.youtube.com/vi/${state.youtubeId}/hqdefault.jpg`,
-                          }}
-                          style={styles.youtubeThumbImage}
-                          resizeMode="cover"
-                        />
-                        <View style={styles.youtubeDarkGrad} />
-                        <View style={styles.youtubeCenterPill}>
-                          <View style={styles.youtubeRedBox}>
-                            <Text style={styles.youtubeWhitePlay}>▶</Text>
-                          </View>
-                          <Text style={styles.youtubeStreamTitle} numberOfLines={1}>
-                            {state.title}
-                          </Text>
-                          <View style={styles.youtubeLiveBadge}>
-                            <View style={styles.livePulseDot} />
-                            <Text style={styles.youtubeLiveText}>TAP TO RESUME PLAYBACK</Text>
-                          </View>
-                        </View>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
-              </View>
-            </View>
+            <YouTubeTheaterPlayer
+              videoId={state.youtubeId}
+              isPlaying={state.isPlaying}
+            />
           </View>
         ) : (
           <TouchableOpacity
