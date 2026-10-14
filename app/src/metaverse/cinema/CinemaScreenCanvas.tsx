@@ -27,12 +27,13 @@ const SCREEN_WIDTH = SW * 0.92;
 // Leave at least 200px of inner height for YouTube's embedded player viewport.
 const SCREEN_HEIGHT = Math.max(SCREEN_WIDTH * (9 / 16), 204);
 
-// YouTube HTML5 Player template with autoplay and touch support
+// YouTube HTML5 Player template with referrer policy to prevent Error 153
 const getYouTubeHtml = (videoId: string, isPlaying: boolean) => `
 <!DOCTYPE html>
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <style>
     * { margin:0; padding:0; box-sizing:border-box; background-color:#000; }
     html, body { width:100%; height:100%; overflow:hidden; background:#000; }
@@ -45,8 +46,9 @@ const getYouTubeHtml = (videoId: string, isPlaying: boolean) => `
     type="text/html"
     width="100%"
     height="100%"
-    src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=${isPlaying ? 1 : 0}&controls=1&playsinline=1&modestbranding=1&rel=0&enablejsapi=1&origin=https://localhost"
+    src="https://www.youtube.com/embed/${videoId}?autoplay=${isPlaying ? 1 : 0}&controls=1&playsinline=1&modestbranding=1&rel=0&enablejsapi=1"
     frameborder="0"
+    referrerpolicy="strict-origin-when-cross-origin"
     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
     allowfullscreen
   ></iframe>
@@ -353,7 +355,8 @@ export default function CinemaScreenCanvas({
                       <WebView
                         key={state.youtubeId}
                         source={{
-                          uri: `https://www.youtube.com/embed/${state.youtubeId}?autoplay=1&playsinline=1&controls=1`,
+                          html: getYouTubeHtml(state.youtubeId, true),
+                          baseUrl: 'https://www.youtube.com',
                         }}
                         style={styles.webView}
                         allowsInlineMediaPlayback={true}
@@ -366,6 +369,7 @@ export default function CinemaScreenCanvas({
                         androidLayerType="hardware"
                         androidHardwareAccelerationDisabled={false}
                         mixedContentMode="always"
+                        originWhitelist={['*']}
                       />
                     ) : (
                       <TouchableOpacity
