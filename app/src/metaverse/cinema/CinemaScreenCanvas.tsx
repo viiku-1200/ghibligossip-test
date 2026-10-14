@@ -342,7 +342,7 @@ export default function CinemaScreenCanvas({
         />
 
         {/* The 16:9 Movie Screen Surface */}
-        {state.youtubeId ? (
+        {state.sourceType === 'web' && state.youtubeId ? (
           <View style={styles.screenSurface}>
             <View style={styles.filmCanvas}>
               <View style={styles.filmColorBackdrop}>
@@ -351,15 +351,21 @@ export default function CinemaScreenCanvas({
                   <View style={styles.youtubeDisplay}>
                     {state.isPlaying ? (
                       <WebView
-                        source={{ html: getYouTubeHtml(state.youtubeId, true) }}
+                        key={state.youtubeId}
+                        source={{
+                          uri: `https://www.youtube.com/embed/${state.youtubeId}?autoplay=1&playsinline=1&controls=1`,
+                        }}
                         style={styles.webView}
                         allowsInlineMediaPlayback={true}
                         allowsFullscreenVideo={true}
                         mediaPlaybackRequiresUserAction={false}
                         javaScriptEnabled={true}
                         domStorageEnabled={true}
-                        originWhitelist={['*']}
-                        userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+                        thirdPartyCookiesEnabled={true}
+                        sharedCookiesEnabled={true}
+                        androidLayerType="hardware"
+                        androidHardwareAccelerationDisabled={false}
+                        mixedContentMode="always"
                       />
                     ) : (
                       <TouchableOpacity
@@ -1065,8 +1071,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   webView: {
-    width: '100%',
-    height: '100%',
+    width: SCREEN_WIDTH - 4,
+    height: SCREEN_HEIGHT - 4,
     backgroundColor: '#000',
   },
   youtubeThumbImage: {

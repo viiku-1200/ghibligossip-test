@@ -265,6 +265,7 @@ export default function VipCinemaScreen({ onBack }: Props) {
       title: movie.title,
       sourceType: 'file',
       sourceName: `${movie.filename} (WS Relay)`,
+      youtubeId: null,
       duration: movie.duration,
       currentTime: 0,
       isPlaying: true,
@@ -284,6 +285,7 @@ export default function VipCinemaScreen({ onBack }: Props) {
         title: 'Host Android Screen Share',
         sourceType: 'screenshare',
         sourceName: 'MediaProjection Live (1080p · 60fps)',
+        youtubeId: null,
         isPlaying: true,
       }));
     } else {
@@ -292,6 +294,7 @@ export default function VipCinemaScreen({ onBack }: Props) {
         title: 'Spirited Away (Collector\'s Cut)',
         sourceType: 'file',
         sourceName: 'Spirited_Away_1080p.mp4',
+        youtubeId: null,
       }));
     }
   };
