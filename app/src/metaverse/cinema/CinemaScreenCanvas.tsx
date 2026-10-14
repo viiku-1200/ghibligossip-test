@@ -24,13 +24,35 @@ import { WebView } from 'react-native-webview';
 
 const { width: SW } = Dimensions.get('window');
 const SCREEN_WIDTH = SW * 0.92;
-const SCREEN_HEIGHT = SCREEN_WIDTH * (9 / 16);
+// Leave at least 200px of inner height for YouTube's embedded player viewport.
+const SCREEN_HEIGHT = Math.max(SCREEN_WIDTH * (9 / 16), 204);
 
-// Check if native RNCWebView is compiled into the current binary
-const hasNativeWebView =
-  typeof UIManager !== 'undefined' &&
-  !!UIManager.getViewManagerConfig &&
-  !!UIManager.getViewManagerConfig('RNCWebView');
+// YouTube HTML5 Player template with autoplay and touch support
+const getYouTubeHtml = (videoId: string, isPlaying: boolean) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; background-color:#000; }
+    html, body { width:100%; height:100%; overflow:hidden; background:#000; }
+    iframe { width:100%; height:100%; border:none; display:block; }
+  </style>
+</head>
+<body>
+  <iframe
+    id="ytplayer"
+    type="text/html"
+    width="100%"
+    height="100%"
+    src="https://www.youtube-nocookie.com/embed/${videoId}?autoplay=${isPlaying ? 1 : 0}&controls=1&playsinline=1&modestbranding=1&rel=0&enablejsapi=1&origin=https://localhost"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+    allowfullscreen
+  ></iframe>
+</body>
+</html>
+`;
 
 export interface CinemaState {
   title: string;
@@ -48,7 +70,6 @@ export interface CinemaState {
 interface Props {
   state: CinemaState;
   onOpenDeck: () => void;
-  onOpenYouTube?: () => void;
   onToggleLights: () => void;
   onTogglePlay: () => void;
   onBack: () => void;
@@ -58,7 +79,6 @@ interface Props {
 export default function CinemaScreenCanvas({
   state,
   onOpenDeck,
-  onOpenYouTube,
   onToggleLights,
   onTogglePlay,
   onBack,
@@ -322,52 +342,31 @@ export default function CinemaScreenCanvas({
         />
 
         {/* The 16:9 Movie Screen Surface */}
-        <TouchableOpacity
-          activeOpacity={0.95}
-          onPress={onTogglePlay}
-          style={styles.screenSurface}
-        >
-          {/* Film Visual Scene */}
-          <Animated.View
-            style={[
-              styles.filmCanvas,
-              {
-                transform: [{ scale: filmZoom }],
-              },
-            ]}
-          >
-            {/* Film Background Backdrop */}
-            <View style={styles.filmColorBackdrop}>
-              {/* Scanlines / Cinema Grain Effect */}
-              <View style={styles.filmScanlines} />
-
-              {/* Central Film Graphic / Artwork */}
-              <View style={styles.filmCenterVisual}>
-                {state.sourceType === 'screenshare' ? (
-                  <View style={styles.screenShareDisplay}>
-                    <Text style={styles.screenShareIcon}>📱</Text>
-                    <Text style={styles.screenShareTitle}>Host Phone Screen Mirror</Text>
-                    <Text style={styles.screenShareSub}>Broadcasting Android Screen (1080p · 60fps)</Text>
-                    <View style={styles.screenSharePill}>
-                      <View style={styles.livePulseDot} />
-                      <Text style={styles.screenShareStatus}>ACTIVE BROADCAST</Text>
-                    </View>
-                  </View>
-                ) : state.youtubeId ? (
+        {state.youtubeId ? (
+          <View style={styles.screenSurface}>
+            <View style={styles.filmCanvas}>
+              <View style={styles.filmColorBackdrop}>
+                <View style={styles.filmScanlines} />
+                <View style={styles.filmCenterVisual}>
                   <View style={styles.youtubeDisplay}>
-                    {hasNativeWebView && state.isPlaying ? (
+                    {state.isPlaying ? (
                       <WebView
-                        source={{
-                          uri: `https://www.youtube-nocookie.com/embed/${state.youtubeId}?autoplay=1&controls=1&modestbranding=1&playsinline=1&rel=0`,
-                        }}
+                        source={{ html: getYouTubeHtml(state.youtubeId, true) }}
                         style={styles.webView}
                         allowsInlineMediaPlayback={true}
+                        allowsFullscreenVideo={true}
                         mediaPlaybackRequiresUserAction={false}
                         javaScriptEnabled={true}
                         domStorageEnabled={true}
+                        originWhitelist={['*']}
+                        userAgent="Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
                       />
                     ) : (
-                      <>
+                      <TouchableOpacity
+                        style={styles.youtubeDisplay}
+                        onPress={onTogglePlay}
+                        activeOpacity={0.8}
+                      >
                         <Image
                           source={{
                             uri: `https://img.youtube.com/vi/${state.youtubeId}/hqdefault.jpg`,
@@ -385,67 +384,104 @@ export default function CinemaScreenCanvas({
                           </Text>
                           <View style={styles.youtubeLiveBadge}>
                             <View style={styles.livePulseDot} />
-                            <Text style={styles.youtubeLiveText}>YOUTUBE 1080p · SYNCED</Text>
+                            <Text style={styles.youtubeLiveText}>TAP TO RESUME PLAYBACK</Text>
                           </View>
                         </View>
-                      </>
+                      </TouchableOpacity>
                     )}
                   </View>
-                ) : (
-                  <View style={styles.movieDisplay}>
-                    <Text style={styles.movieEmoji}>🌌</Text>
-                    <Text style={styles.movieTitleDisplay}>{state.title}</Text>
-                    <Text style={styles.movieSourceInfo}>
-                      {state.sourceType === 'file' ? '⚡ WS Chunks Relay · 1080p' : '🌐 Web Stream · Direct'}
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Subtitle Bar */}
-              {state.isPlaying && (
-                <View style={styles.subtitleContainer}>
-                  <Text style={styles.subtitleText}>"{state.subtitle}"</Text>
                 </View>
-              )}
-
-              {/* Paused Overlay */}
-              {!state.isPlaying && (
-                <View style={styles.pauseOverlay}>
-                  <View style={styles.pauseCircle}>
-                    <Text style={styles.pauseIcon}>⏸️</Text>
-                  </View>
-                  <Text style={styles.pauseText}>PAUSED BY HOST</Text>
-                </View>
-              )}
-
-              {/* Live Audio Equalizer in bottom-left */}
-              {state.isPlaying && (
-                <View style={styles.audioEqContainer}>
-                  {eqBars.map((bar, i) => (
-                    <Animated.View
-                      key={i}
-                      style={[
-                        styles.eqBar,
-                        {
-                          height: bar,
-                        },
-                      ]}
-                    />
-                  ))}
-                  <Text style={styles.audioLabel}>DOLBY 5.1</Text>
-                </View>
-              )}
-
-              {/* Time Code Stamp in bottom-right */}
-              <View style={styles.timecodePill}>
-                <Text style={styles.timecodeText}>
-                  {formatTime(state.currentTime)} / {formatTime(state.duration)}
-                </Text>
               </View>
             </View>
-          </Animated.View>
-        </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            activeOpacity={0.95}
+            onPress={onTogglePlay}
+            style={styles.screenSurface}
+          >
+            {/* Film Visual Scene */}
+            <Animated.View
+              style={[
+                styles.filmCanvas,
+                {
+                  transform: [{ scale: filmZoom }],
+                },
+              ]}
+            >
+              {/* Film Background Backdrop */}
+              <View style={styles.filmColorBackdrop}>
+                {/* Scanlines / Cinema Grain Effect */}
+                <View style={styles.filmScanlines} />
+
+                {/* Central Film Graphic / Artwork */}
+                <View style={styles.filmCenterVisual}>
+                  {state.sourceType === 'screenshare' ? (
+                    <View style={styles.screenShareDisplay}>
+                      <Text style={styles.screenShareIcon}>📱</Text>
+                      <Text style={styles.screenShareTitle}>Host Phone Screen Mirror</Text>
+                      <Text style={styles.screenShareSub}>Broadcasting Android Screen (1080p · 60fps)</Text>
+                      <View style={styles.screenSharePill}>
+                        <View style={styles.livePulseDot} />
+                        <Text style={styles.screenShareStatus}>ACTIVE BROADCAST</Text>
+                      </View>
+                    </View>
+                  ) : (
+                    <View style={styles.movieDisplay}>
+                      <Text style={styles.movieEmoji}>🌌</Text>
+                      <Text style={styles.movieTitleDisplay}>{state.title}</Text>
+                      <Text style={styles.movieSourceInfo}>
+                        {state.sourceType === 'file' ? '⚡ WS Chunks Relay · 1080p' : '🌐 Web Stream · Direct'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Subtitle Bar */}
+                {state.isPlaying && (
+                  <View style={styles.subtitleContainer}>
+                    <Text style={styles.subtitleText}>"{state.subtitle}"</Text>
+                  </View>
+                )}
+
+                {/* Paused Overlay */}
+                {!state.isPlaying && (
+                  <View style={styles.pauseOverlay}>
+                    <View style={styles.pauseCircle}>
+                      <Text style={styles.pauseIcon}>⏸️</Text>
+                    </View>
+                    <Text style={styles.pauseText}>PAUSED BY HOST</Text>
+                  </View>
+                )}
+
+                {/* Live Audio Equalizer in bottom-left */}
+                {state.isPlaying && (
+                  <View style={styles.audioEqContainer}>
+                    {eqBars.map((bar, i) => (
+                      <Animated.View
+                        key={i}
+                        style={[
+                          styles.eqBar,
+                          {
+                            height: bar,
+                          },
+                        ]}
+                      />
+                    ))}
+                    <Text style={styles.audioLabel}>DOLBY 5.1</Text>
+                  </View>
+                )}
+
+                {/* Time Code Stamp in bottom-right */}
+                <View style={styles.timecodePill}>
+                  <Text style={styles.timecodeText}>
+                    {formatTime(state.currentTime)} / {formatTime(state.duration)}
+                  </Text>
+                </View>
+              </View>
+            </Animated.View>
+          </TouchableOpacity>
+        )}
 
         {/* Right Velvet Curtain */}
         <View style={styles.curtainRight}>
@@ -469,33 +505,6 @@ export default function CinemaScreenCanvas({
         </TouchableOpacity>
       </View>
 
-      {/* ── Projector Options Just Below Upper Room Screen ── */}
-      {isHost && (
-        <View style={styles.projectorBarJustBelow}>
-          {/* Direct YouTube Button */}
-          <TouchableOpacity
-            style={styles.directYouTubeBtnStage}
-            onPress={onOpenYouTube}
-            activeOpacity={0.8}
-          >
-            <View style={styles.directYouTubeBadge}>
-              <Text style={styles.directYouTubeBadgeText}>▶</Text>
-            </View>
-            <Text style={styles.directYouTubeBtnText}>PASTE YOUTUBE LINK</Text>
-          </TouchableOpacity>
-
-          {/* Projector Deck Button */}
-          <TouchableOpacity
-            style={styles.projectorButtonBelow}
-            onPress={onOpenDeck}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.projectorButtonBelowCrown}>👑</Text>
-            <Text style={styles.projectorButtonBelowText}>DECK</Text>
-            <Text style={styles.projectorOpenArrow}>▾</Text>
-          </TouchableOpacity>
-        </View>
-      )}
     </View>
   );
 }
@@ -504,7 +513,7 @@ const styles = StyleSheet.create({
   stageContainer: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#0a0508',
+    backgroundColor: '#09080c',
     alignItems: 'center',
     position: 'relative',
     overflow: 'hidden',
@@ -516,23 +525,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 6,
+    paddingHorizontal: 18,
+    paddingTop: 9,
+    paddingBottom: 7,
     zIndex: 20,
   },
   backBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#17151a',
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.3)',
+    borderColor: 'rgba(206, 178, 117, 0.3)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backArrow: {
-    color: '#d4af37',
+    color: '#d7bd82',
     fontSize: 24,
     fontWeight: '300',
     marginTop: -2,
@@ -540,13 +549,13 @@ const styles = StyleSheet.create({
   roomStatusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    backgroundColor: '#141217',
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.25)',
-    gap: 7,
+    borderColor: 'rgba(206, 178, 117, 0.18)',
+    gap: 6,
   },
   statusDot: {
     width: 7,
@@ -560,8 +569,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
   },
   viewerCountText: {
-    color: '#d4af37',
-    fontSize: 11,
+    color: '#d7bd82',
+    fontSize: 10,
     fontWeight: '700',
     marginLeft: 4,
   },
@@ -574,15 +583,15 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    backgroundColor: '#17151a',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.09)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   actionIconBtnActive: {
-    backgroundColor: 'rgba(212, 175, 55, 0.25)',
-    borderColor: '#d4af37',
+    backgroundColor: 'rgba(206, 178, 117, 0.18)',
+    borderColor: '#cdb477',
   },
   actionIconEmoji: {
     fontSize: 16,
@@ -590,14 +599,14 @@ const styles = StyleSheet.create({
   projectorDeckBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#d4af37',
+    backgroundColor: '#c5a96e',
     paddingHorizontal: 10,
     paddingVertical: 7,
     borderRadius: 14,
     gap: 4,
     shadowColor: '#d4af37',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
@@ -605,7 +614,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   projectorDeckText: {
-    color: '#000',
+    color: '#17130d',
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 1,
@@ -639,11 +648,11 @@ const styles = StyleSheet.create({
   topCurtainPelmet: {
     width: '100%',
     height: 18,
-    backgroundColor: '#7f1d1d',
+    backgroundColor: '#32151f',
     flexDirection: 'row',
     justifyContent: 'space-around',
     borderBottomWidth: 2,
-    borderBottomColor: '#d4af37',
+    borderBottomColor: 'rgba(205, 174, 111, 0.62)',
     zIndex: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -654,7 +663,7 @@ const styles = StyleSheet.create({
   pelmetFold: {
     width: '30%',
     height: '100%',
-    backgroundColor: '#991b1b',
+    backgroundColor: '#411a28',
     borderBottomLeftRadius: 10,
     borderBottomRightRadius: 10,
   },
@@ -664,7 +673,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 2,
-    backgroundColor: '#d4af37',
+    backgroundColor: '#c5a96e',
   },
 
   // Cinema Stage Frame
@@ -682,9 +691,9 @@ const styles = StyleSheet.create({
   curtainLeft: {
     width: SW * 0.05,
     height: '100%',
-    backgroundColor: '#7f1d1d',
-    borderRightWidth: 2,
-    borderRightColor: 'rgba(212, 175, 55, 0.4)',
+    backgroundColor: '#32151f',
+    borderRightWidth: 1,
+    borderRightColor: 'rgba(205, 174, 111, 0.28)',
     zIndex: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -692,9 +701,9 @@ const styles = StyleSheet.create({
   curtainRight: {
     width: SW * 0.05,
     height: '100%',
-    backgroundColor: '#7f1d1d',
-    borderLeftWidth: 2,
-    borderLeftColor: 'rgba(212, 175, 55, 0.4)',
+    backgroundColor: '#32151f',
+    borderLeftWidth: 1,
+    borderLeftColor: 'rgba(205, 174, 111, 0.28)',
     zIndex: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -720,13 +729,13 @@ const styles = StyleSheet.create({
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT,
     backgroundColor: '#000',
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#262626',
+    borderColor: 'rgba(205, 174, 111, 0.42)',
     overflow: 'hidden',
     shadowColor: '#d4af37',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.22,
     shadowRadius: 14,
     elevation: 8,
     position: 'relative',
@@ -746,7 +755,7 @@ const styles = StyleSheet.create({
   filmColorBackdrop: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#120d1e',
+    backgroundColor: '#08070b',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -762,6 +771,11 @@ const styles = StyleSheet.create({
     opacity: 0.15,
   },
   filmCenterVisual: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -927,41 +941,43 @@ const styles = StyleSheet.create({
     width: SW * 0.94,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(20, 10, 15, 0.9)',
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginTop: 4,
+    backgroundColor: '#121016',
+    borderRadius: 12,
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    marginTop: 6,
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.25)',
+    borderColor: 'rgba(205, 174, 111, 0.2)',
     gap: 8,
   },
   marqueeBadge: {
-    backgroundColor: '#7f1d1d',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#d4af37',
+    backgroundColor: 'rgba(205, 174, 111, 0.12)',
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   marqueeBadgeText: {
-    color: '#d4af37',
+    color: '#d7bd82',
     fontSize: 8,
     fontWeight: '900',
     letterSpacing: 1,
   },
   marqueeTitle: {
     flex: 1,
-    color: '#fff',
-    fontSize: 11,
-    fontWeight: '700',
+    color: '#f4f0e8',
+    fontSize: 10,
+    fontWeight: '600',
   },
   marqueePlayBtn: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(205, 174, 111, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   marqueePlayText: {
-    fontSize: 14,
+    fontSize: 13,
   },
 
   // Projector Bar Just Below

@@ -345,7 +345,6 @@ export default function VipCinemaScreen({ onBack }: Props) {
             setProjectorInitialTab('file');
             setIsDeckVisible(true);
           }}
-          onOpenYouTube={() => setIsYouTubeModalVisible(true)}
           onToggleLights={handleToggleLights}
           onTogglePlay={handleTogglePlay}
           onBack={onBack}
@@ -359,7 +358,10 @@ export default function VipCinemaScreen({ onBack }: Props) {
       <View style={styles.projectorConsoleDivider}>
         {/* Button 1: Direct YouTube Link (Highest Priority, Big Red Badge) */}
         <TouchableOpacity
-          style={styles.projectorYouTubeDirectBtn}
+          style={[
+            styles.projectorYouTubeDirectBtn,
+            cinemaState.sourceType === 'web' && styles.projectorYouTubeDirectBtnActive,
+          ]}
           onPress={() => setIsYouTubeModalVisible(true)}
           activeOpacity={0.7}
         >
@@ -381,7 +383,7 @@ export default function VipCinemaScreen({ onBack }: Props) {
           }}
           activeOpacity={0.7}
         >
-          <Text style={styles.projectorDividerEmoji}>📁</Text>
+          <Text style={styles.projectorDividerEmoji}>▣</Text>
           <Text style={styles.projectorDividerText}>Phone</Text>
         </TouchableOpacity>
 
@@ -394,7 +396,7 @@ export default function VipCinemaScreen({ onBack }: Props) {
           onPress={() => handleToggleScreenShare(cinemaState.sourceType !== 'screenshare')}
           activeOpacity={0.7}
         >
-          <Text style={styles.projectorDividerEmoji}>📺</Text>
+          <Text style={styles.projectorDividerEmoji}>▰</Text>
           <Text style={styles.projectorDividerText}>
             {cinemaState.sourceType === 'screenshare' ? 'Sharing 🔴' : 'Screen'}
           </Text>
@@ -647,7 +649,7 @@ const styles = StyleSheet.create({
   upperStage: {
     height: HALF_H - 24,
     width: SW,
-    backgroundColor: '#08050a',
+    backgroundColor: '#09080c',
     zIndex: 10,
   },
 
@@ -655,51 +657,50 @@ const styles = StyleSheet.create({
   projectorConsoleDivider: {
     width: '100%',
     height: 48,
-    backgroundColor: '#0a050d',
-    borderTopWidth: 1.5,
-    borderTopColor: 'rgba(212, 175, 55, 0.45)',
-    borderBottomWidth: 1.5,
-    borderBottomColor: 'rgba(212, 175, 55, 0.3)',
+    backgroundColor: '#100e13',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(205, 174, 111, 0.24)',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(205, 174, 111, 0.16)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     gap: 6,
     zIndex: 25,
-    shadowColor: '#d4af37',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOpacity: 0.32,
+    shadowRadius: 10,
+    elevation: 5,
   },
   projectorYouTubeDirectBtn: {
-    flex: 1.35,
+    flex: 1.25,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#dc2626',
-    paddingVertical: 7,
+    backgroundColor: '#211519',
+    height: 34,
     paddingHorizontal: 8,
-    borderRadius: 10,
+    borderRadius: 12,
     gap: 6,
     borderWidth: 1,
-    borderColor: '#ff6666',
-    shadowColor: '#dc2626',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-    elevation: 3,
+    borderColor: 'rgba(219, 83, 91, 0.38)',
+  },
+  projectorYouTubeDirectBtnActive: {
+    backgroundColor: '#2b1b20',
+    borderColor: 'rgba(219, 83, 91, 0.7)',
   },
   projectorChipYouTubeBox: {
-    width: 16,
-    height: 12,
-    backgroundColor: '#fff',
-    borderRadius: 3,
+    width: 18,
+    height: 14,
+    backgroundColor: '#d94b55',
+    borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
   },
   projectorChipYouTubePlay: {
-    color: '#dc2626',
+    color: '#fff',
     fontSize: 8,
     fontWeight: '900',
     marginLeft: 1,
@@ -711,43 +712,43 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   projectorDividerBtn: {
-    flex: 1,
+    flex: 0.9,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    paddingVertical: 7,
+    backgroundColor: '#18161b',
+    height: 34,
     paddingHorizontal: 6,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
     gap: 4,
   },
   projectorDividerBtnActive: {
-    backgroundColor: 'rgba(212, 175, 55, 0.18)',
-    borderColor: '#d4af37',
+    backgroundColor: 'rgba(205, 174, 111, 0.13)',
+    borderColor: 'rgba(205, 174, 111, 0.55)',
   },
   projectorDividerEmoji: {
     fontSize: 12,
   },
   projectorDividerText: {
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.76)',
     fontSize: 10,
     fontWeight: '800',
   },
   projectorDeckSquareBtn: {
-    width: 44,
+    width: 42,
     height: 34,
-    backgroundColor: '#d4af37',
-    borderRadius: 10,
+    backgroundColor: '#c5a96e',
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
-    shadowColor: '#d4af37',
+    shadowColor: '#c5a96e',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
+    shadowOpacity: 0.28,
+    shadowRadius: 5,
     elevation: 3,
   },
   projectorDeckSquareCrown: {
@@ -763,9 +764,9 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: 'rgba(212, 175, 55, 0.2)',
+    backgroundColor: '#211d17',
     borderWidth: 1,
-    borderColor: '#d4af37',
+    borderColor: 'rgba(205, 174, 111, 0.55)',
     justifyContent: 'center',
     alignItems: 'center',
   },
