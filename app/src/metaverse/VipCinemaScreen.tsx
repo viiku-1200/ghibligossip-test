@@ -1,5 +1,6 @@
 // ═══════════════════════════════════════════════════════════════
 // VipCinemaScreen.tsx — VIP Cinema & Synchronized Watch Party
+// PREMIUM EDITION — Ultra-Luxury Cinematic Lounge
 // Galaverse Architecture Parity:
 // • Split-Screen: Upper 16:9 Cinema Canvas + Lower VIP Recliner Lounge
 // • Option 3: Downloaded Phone Movie (WebSocket Relay to Node.js server)
@@ -357,8 +358,12 @@ export default function VipCinemaScreen({ onBack }: Props) {
 
       {/* ═══════════════════════════════════════════════════════════════
           PROJECTOR OPTIONS CONSOLE (JUST BELOW OF UPPER ROOM)
+          Premium Glassmorphism Control Strip
           ═══════════════════════════════════════════════════════════════ */}
       <View style={styles.projectorConsoleDivider}>
+        {/* Subtle top gold accent line */}
+        <View style={styles.consoleDividerGoldLine} />
+
         {/* Button 1: Direct YouTube Link (Highest Priority, Big Red Badge) */}
         <TouchableOpacity
           style={[
@@ -386,7 +391,7 @@ export default function VipCinemaScreen({ onBack }: Props) {
           }}
           activeOpacity={0.7}
         >
-          <Text style={styles.projectorDividerEmoji}>▣</Text>
+          <Text style={styles.projectorDividerEmoji}>📱</Text>
           <Text style={styles.projectorDividerText}>Phone</Text>
         </TouchableOpacity>
 
@@ -399,9 +404,9 @@ export default function VipCinemaScreen({ onBack }: Props) {
           onPress={() => handleToggleScreenShare(cinemaState.sourceType !== 'screenshare')}
           activeOpacity={0.7}
         >
-          <Text style={styles.projectorDividerEmoji}>▰</Text>
+          <Text style={styles.projectorDividerEmoji}>📺</Text>
           <Text style={styles.projectorDividerText}>
-            {cinemaState.sourceType === 'screenshare' ? 'Sharing 🔴' : 'Screen'}
+            {cinemaState.sourceType === 'screenshare' ? 'Live 🔴' : 'Screen'}
           </Text>
         </TouchableOpacity>
 
@@ -420,7 +425,10 @@ export default function VipCinemaScreen({ onBack }: Props) {
 
         {/* Button 5: Master Play/Pause */}
         <TouchableOpacity
-          style={styles.projectorPlayPauseChip}
+          style={[
+            styles.projectorPlayPauseChip,
+            cinemaState.isPlaying && styles.projectorPlayPauseChipPlaying,
+          ]}
           onPress={handleTogglePlay}
           activeOpacity={0.7}
         >
@@ -500,59 +508,73 @@ export default function VipCinemaScreen({ onBack }: Props) {
           ))}
         </View>
 
-        {/* ── Interactive Cinema Actions Bar ── */}
+        {/* ── Interactive Cinema Actions Bar (Premium Floating Dock) ── */}
         <View style={styles.cinemaActionsBar}>
-          <TouchableOpacity
-            style={styles.cinemaActionBtn}
-            onPress={handleThrowPopcorn}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.cinemaActionEmoji}>🍿</Text>
-            <Text style={styles.cinemaActionLabel}>Toss Popcorn</Text>
-          </TouchableOpacity>
+          <View style={styles.cinemaActionsInner}>
+            <TouchableOpacity
+              style={styles.cinemaActionBtn}
+              onPress={handleThrowPopcorn}
+              activeOpacity={0.7}
+            >
+              <View style={styles.cinemaActionIconWrap}>
+                <Text style={styles.cinemaActionEmoji}>🍿</Text>
+              </View>
+              <Text style={styles.cinemaActionLabel}>Toss</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.cinemaActionBtn}
-            onPress={handleSodaSip}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.cinemaActionEmoji}>🥤</Text>
-            <Text style={styles.cinemaActionLabel}>Sip Soda</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cinemaActionBtn}
+              onPress={handleSodaSip}
+              activeOpacity={0.7}
+            >
+              <View style={styles.cinemaActionIconWrap}>
+                <Text style={styles.cinemaActionEmoji}>🥤</Text>
+              </View>
+              <Text style={styles.cinemaActionLabel}>Sip</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.cinemaActionBtn, has3DGlasses && styles.cinemaActionBtnActive]}
-            onPress={handleToggle3DGlasses}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.cinemaActionEmoji}>🕶️</Text>
-            <Text style={[styles.cinemaActionLabel, has3DGlasses && styles.cinemaActionLabelActive]}>
-              {has3DGlasses ? '3D ON' : '3D Glasses'}
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.cinemaActionBtn, has3DGlasses && styles.cinemaActionBtnActive]}
+              onPress={handleToggle3DGlasses}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.cinemaActionIconWrap, has3DGlasses && styles.cinemaActionIconWrapActive]}>
+                <Text style={styles.cinemaActionEmoji}>🕶️</Text>
+              </View>
+              <Text style={[styles.cinemaActionLabel, has3DGlasses && styles.cinemaActionLabelActive]}>
+                {has3DGlasses ? 'ON' : '3D'}
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.cinemaActionBtn}
-            onPress={handleCinemaShhh}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.cinemaActionEmoji}>🤫</Text>
-            <Text style={styles.cinemaActionLabel}>Shhh!</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.cinemaActionBtn}
+              onPress={handleCinemaShhh}
+              activeOpacity={0.7}
+            >
+              <View style={styles.cinemaActionIconWrap}>
+                <Text style={styles.cinemaActionEmoji}>🤫</Text>
+              </View>
+              <Text style={styles.cinemaActionLabel}>Shhh</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.cinemaActionBtn, styles.giftActionBtn]}
-            onPress={() => {
-              spawnReaction('🎟️');
-              spawnReaction('🍿');
-              spawnReaction('🍾');
-              Alert.alert('🎁 VIP Cinema Gift Sent!', 'You sent a Golden VIP Cinema Pass to the host!');
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.cinemaActionEmoji}>🎁</Text>
-            <Text style={styles.giftActionLabel}>VIP Gift</Text>
-          </TouchableOpacity>
+            <View style={styles.cinemaActionDivider} />
+
+            <TouchableOpacity
+              style={[styles.cinemaActionBtn, styles.giftActionBtn]}
+              onPress={() => {
+                spawnReaction('🎟️');
+                spawnReaction('🍿');
+                spawnReaction('🍾');
+                Alert.alert('🎁 VIP Cinema Gift Sent!', 'You sent a Golden VIP Cinema Pass to the host!');
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.cinemaActionIconWrap, styles.giftIconWrap]}>
+                <Text style={styles.cinemaActionEmoji}>🎁</Text>
+              </View>
+              <Text style={styles.giftActionLabel}>Gift</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── Live Chat Overlay on the Left ── */}
@@ -572,14 +594,14 @@ export default function VipCinemaScreen({ onBack }: Props) {
           }}
         />
 
-        {/* ── Bottom Whisper Chat & Reaction Input ── */}
+        {/* ── Bottom Whisper Chat & Reaction Input (Premium) ── */}
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={styles.bottomBar}
         >
-          {/* Quick Reaction Emojis */}
+          {/* Quick Reaction Emojis — Premium Pill Row */}
           <View style={styles.quickReactionsRow}>
-            {['🍿', '🥤', '🕶️', '😱', '🔥', '❤️', '👏'].map((emoji) => (
+            {['🍿', '🥤', '🕶️', '😱', '🔥', '❤️', '👏', '🎬'].map((emoji) => (
               <TouchableOpacity
                 key={emoji}
                 style={styles.quickReactionBtn}
@@ -591,17 +613,20 @@ export default function VipCinemaScreen({ onBack }: Props) {
             ))}
           </View>
 
-          {/* Text Input Row */}
+          {/* Text Input Row — Premium Whisper Bar */}
           <View style={styles.chatInputRow}>
-            <TextInput
-              style={styles.chatInput}
-              placeholder="Whisper in the cinema..."
-              placeholderTextColor="#777"
-              value={chatText}
-              onChangeText={setChatText}
-              onSubmitEditing={handleSendChat}
-              returnKeyType="send"
-            />
+            <View style={styles.chatInputContainer}>
+              <Text style={styles.chatInputIcon}>🤫</Text>
+              <TextInput
+                style={styles.chatInput}
+                placeholder="Whisper in the cinema..."
+                placeholderTextColor="rgba(255,255,255,0.3)"
+                value={chatText}
+                onChangeText={setChatText}
+                onSubmitEditing={handleSendChat}
+                returnKeyType="send"
+              />
+            </View>
             <TouchableOpacity style={styles.sendChatBtn} onPress={handleSendChat} activeOpacity={0.8}>
               <Text style={styles.sendChatBtnText}>SEND</Text>
             </TouchableOpacity>
@@ -645,7 +670,7 @@ export default function VipCinemaScreen({ onBack }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#05030a',
   },
 
   // Upper Stage: Just under half
@@ -656,15 +681,15 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
 
-  // Projector Console Divider (Just Below Upper Room)
+  // ══════════════════════════════════════════════════════════
+  // PROJECTOR CONSOLE DIVIDER — Premium Glassmorphism Strip
+  // ══════════════════════════════════════════════════════════
   projectorConsoleDivider: {
     width: '100%',
-    height: 48,
-    backgroundColor: '#100e13',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(205, 174, 111, 0.24)',
+    height: 52,
+    backgroundColor: 'rgba(12, 8, 18, 0.95)',
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(205, 174, 111, 0.16)',
+    borderBottomColor: 'rgba(205, 174, 111, 0.12)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -672,35 +697,54 @@ const styles = StyleSheet.create({
     gap: 6,
     zIndex: 25,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.32,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
+    position: 'relative',
+  },
+  consoleDividerGoldLine: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1.5,
+    backgroundColor: 'rgba(212, 175, 55, 0.35)',
   },
   projectorYouTubeDirectBtn: {
     flex: 1.25,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#211519',
-    height: 34,
+    backgroundColor: 'rgba(180, 40, 50, 0.12)',
+    height: 36,
     paddingHorizontal: 8,
     borderRadius: 12,
     gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(219, 83, 91, 0.38)',
+    borderWidth: 1.2,
+    borderColor: 'rgba(220, 38, 38, 0.35)',
   },
   projectorYouTubeDirectBtnActive: {
-    backgroundColor: '#2b1b20',
-    borderColor: 'rgba(219, 83, 91, 0.7)',
+    backgroundColor: 'rgba(220, 38, 38, 0.2)',
+    borderColor: 'rgba(255, 80, 80, 0.7)',
+    shadowColor: '#ff4444',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 3,
   },
   projectorChipYouTubeBox: {
-    width: 18,
-    height: 14,
-    backgroundColor: '#d94b55',
+    width: 20,
+    height: 15,
+    backgroundColor: '#dc2626',
     borderRadius: 4,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#dc2626',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
+    elevation: 2,
   },
   projectorChipYouTubePlay: {
     color: '#fff',
@@ -710,7 +754,7 @@ const styles = StyleSheet.create({
   },
   projectorChipYouTubeText: {
     color: '#fff',
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '900',
     letterSpacing: 0.5,
   },
@@ -719,71 +763,86 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#18161b',
-    height: 34,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    height: 36,
     paddingHorizontal: 6,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
-    gap: 4,
+    gap: 5,
   },
   projectorDividerBtnActive: {
-    backgroundColor: 'rgba(205, 174, 111, 0.13)',
-    borderColor: 'rgba(205, 174, 111, 0.55)',
+    backgroundColor: 'rgba(205, 174, 111, 0.15)',
+    borderColor: 'rgba(205, 174, 111, 0.6)',
+    shadowColor: '#d4af37',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 2,
   },
   projectorDividerEmoji: {
-    fontSize: 12,
+    fontSize: 13,
   },
   projectorDividerText: {
-    color: 'rgba(255, 255, 255, 0.76)',
+    color: 'rgba(255, 255, 255, 0.78)',
     fontSize: 10,
     fontWeight: '800',
   },
   projectorDeckSquareBtn: {
-    width: 42,
-    height: 34,
+    width: 44,
+    height: 36,
     backgroundColor: '#c5a96e',
     borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 2,
-    shadowColor: '#c5a96e',
+    shadowColor: '#d4af37',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.28,
-    shadowRadius: 5,
-    elevation: 3,
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+    elevation: 4,
   },
   projectorDeckSquareCrown: {
     fontSize: 12,
   },
   projectorDeckSquareText: {
-    color: '#000',
+    color: '#0a0806',
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 0.5,
   },
   projectorPlayPauseChip: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#211d17',
-    borderWidth: 1,
-    borderColor: 'rgba(205, 174, 111, 0.55)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(25, 20, 15, 0.9)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(205, 174, 111, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
+  projectorPlayPauseChipPlaying: {
+    borderColor: '#4ade80',
+    shadowColor: '#4ade80',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 2,
+  },
   projectorPlayPauseEmoji: {
-    fontSize: 13,
+    fontSize: 14,
   },
 
-  // Lower Lounge: Just under half
+  // ══════════════════════════════════════════════════════════
+  // LOWER LOUNGE — Premium VIP Recliner Theater
+  // ══════════════════════════════════════════════════════════
   lowerLounge: {
     height: HALF_H - 24,
     width: SW,
     position: 'relative',
     overflow: 'hidden',
-    backgroundColor: '#050308',
+    backgroundColor: '#030108',
   },
   loungeBackground: {
     position: 'absolute',
@@ -803,7 +862,7 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
 
-  // Recliner Tier Guide
+  // Recliner Tier Guide — Enhanced Visual Tiers
   reclinerRowsGuide: {
     position: 'absolute',
     top: 0,
@@ -817,10 +876,10 @@ const styles = StyleSheet.create({
     top: HALF_H * 0.18,
     left: 0,
     right: 0,
-    height: 18,
-    backgroundColor: 'rgba(127, 29, 29, 0.45)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(212, 175, 55, 0.3)',
+    height: 20,
+    backgroundColor: 'rgba(100, 20, 20, 0.35)',
+    borderTopWidth: 1.5,
+    borderTopColor: 'rgba(212, 175, 55, 0.35)',
     justifyContent: 'center',
     paddingHorizontal: 16,
   },
@@ -829,14 +888,19 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 2,
+    height: 1.5,
     backgroundColor: '#d4af37',
+    shadowColor: '#d4af37',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 2,
   },
   shelfLabel: {
-    color: 'rgba(212, 175, 55, 0.7)',
+    color: 'rgba(212, 175, 55, 0.75)',
     fontSize: 8,
     fontWeight: '900',
-    letterSpacing: 2,
+    letterSpacing: 2.5,
   },
   frontRowFloor: {
     position: 'absolute',
@@ -846,13 +910,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   floorLabel: {
-    color: 'rgba(255, 255, 255, 0.25)',
+    color: 'rgba(255, 255, 255, 0.2)',
     fontSize: 8,
     fontWeight: '900',
-    letterSpacing: 2,
+    letterSpacing: 2.5,
   },
 
-  // Seat Badges
+  // Seat Badges — Premium Floating Tags
   seatLabelsContainer: {
     position: 'absolute',
     top: 0,
@@ -863,85 +927,126 @@ const styles = StyleSheet.create({
   },
   seatBadge: {
     position: 'absolute',
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
+    backgroundColor: 'rgba(8, 4, 15, 0.82)',
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   hostSeatBadge: {
-    backgroundColor: 'rgba(212, 175, 55, 0.25)',
+    backgroundColor: 'rgba(212, 175, 55, 0.2)',
     borderColor: '#d4af37',
+    shadowColor: '#d4af37',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    elevation: 3,
   },
   seatBadgeText: {
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.78)',
     fontSize: 9,
     fontWeight: '700',
   },
   hostSeatBadgeText: {
-    color: '#d4af37',
+    color: '#f0d078',
     fontWeight: '900',
   },
 
-  // Cinema Actions Bar
+  // ══════════════════════════════════════════════════════════
+  // CINEMA ACTIONS BAR — Premium Floating Dock
+  // ══════════════════════════════════════════════════════════
   cinemaActionsBar: {
     position: 'absolute',
-    top: 8,
-    right: 12,
-    flexDirection: 'row',
-    gap: 6,
+    top: 6,
+    right: 8,
     zIndex: 25,
-    backgroundColor: 'rgba(10, 5, 12, 0.85)',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 16,
+  },
+  cinemaActionsInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(8, 4, 14, 0.88)',
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.25)',
+    borderColor: 'rgba(212, 175, 55, 0.2)',
+    gap: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    elevation: 6,
   },
   cinemaActionBtn: {
     alignItems: 'center',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    paddingHorizontal: 5,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
   cinemaActionBtnActive: {
-    backgroundColor: 'rgba(212, 175, 55, 0.3)',
+    // Intentionally empty — active state is on icon wrap
+  },
+  cinemaActionIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
+    justifyContent: 'center',
+    alignItems: 'center',
     borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.06)',
+  },
+  cinemaActionIconWrapActive: {
+    backgroundColor: 'rgba(212, 175, 55, 0.25)',
     borderColor: '#d4af37',
+    shadowColor: '#d4af37',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 2,
   },
   cinemaActionEmoji: {
     fontSize: 14,
   },
   cinemaActionLabel: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 8,
-    fontWeight: '700',
-    marginTop: 1,
+    color: 'rgba(255, 255, 255, 0.55)',
+    fontSize: 7,
+    fontWeight: '800',
+    marginTop: 2,
+    letterSpacing: 0.3,
   },
   cinemaActionLabelActive: {
-    color: '#d4af37',
+    color: '#f0d078',
     fontWeight: '900',
+  },
+  cinemaActionDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: 'rgba(212, 175, 55, 0.2)',
+    marginHorizontal: 2,
   },
   giftActionBtn: {
+    // Intentionally empty — uses giftIconWrap
+  },
+  giftIconWrap: {
     backgroundColor: 'rgba(212, 175, 55, 0.15)',
-    borderColor: 'rgba(212, 175, 55, 0.3)',
-    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.35)',
   },
   giftActionLabel: {
-    color: '#d4af37',
-    fontSize: 8,
+    color: '#f0d078',
+    fontSize: 7,
     fontWeight: '900',
-    marginTop: 1,
+    marginTop: 2,
+    letterSpacing: 0.3,
   },
 
   // Chat Overlay
   chatOverlayWrapper: {
     position: 'absolute',
-    top: 40,
+    top: 44,
     left: 8,
-    bottom: 90,
+    bottom: 95,
     width: SW * 0.42,
     zIndex: 20,
   },
@@ -949,76 +1054,91 @@ const styles = StyleSheet.create({
   // Floating Popcorn
   floatingPopcorn: {
     position: 'absolute',
-    bottom: 70,
+    bottom: 75,
     zIndex: 40,
   },
   floatingEmojiText: {
-    fontSize: 28,
+    fontSize: 30,
   },
 
-  // Bottom Bar
+  // ══════════════════════════════════════════════════════════
+  // BOTTOM BAR — Premium Whisper Chat Interface
+  // ══════════════════════════════════════════════════════════
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(10, 5, 12, 0.96)',
+    backgroundColor: 'rgba(6, 3, 10, 0.97)',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(212, 175, 55, 0.2)',
-    paddingHorizontal: 12,
-    paddingTop: 6,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+    borderTopColor: 'rgba(212, 175, 55, 0.18)',
+    paddingHorizontal: 10,
+    paddingTop: 7,
+    paddingBottom: Platform.OS === 'ios' ? 24 : 8,
     zIndex: 30,
   },
   quickReactionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 6,
+    marginBottom: 7,
   },
   quickReactionBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.07)',
   },
   quickReactionEmoji: {
-    fontSize: 18,
+    fontSize: 17,
   },
   chatInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
+  chatInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  chatInputIcon: {
+    fontSize: 14,
+    marginRight: 8,
+  },
   chatInput: {
     flex: 1,
-    height: 38,
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-    borderRadius: 19,
-    paddingHorizontal: 16,
+    height: 40,
     color: '#fff',
     fontSize: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    paddingVertical: 0,
   },
   sendChatBtn: {
     backgroundColor: '#d4af37',
-    height: 38,
-    paddingHorizontal: 16,
-    borderRadius: 19,
+    height: 40,
+    paddingHorizontal: 18,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#d4af37',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOpacity: 0.55,
+    shadowRadius: 8,
+    elevation: 4,
   },
   sendChatBtnText: {
-    color: '#000',
+    color: '#0a0806',
     fontSize: 11,
     fontWeight: '900',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
   },
 });

@@ -1,6 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // CinemaScreenCanvas.tsx — The 16:9 Grand Cinema Screen & Stage
-// • Velvet Curtains with gold trim and ambient glow
+// PREMIUM EDITION — Ultra-Luxury Theater Visuals
+// • Deep velvet curtains with gold trim and atmospheric glow
 // • Projector light beam from ceiling with floating dust particles
 // • Film Marquee ticker with movie title & live sync status
 // • Hardware-accelerated cinematic canvas with subtitles & audio spectrum
@@ -443,7 +444,7 @@ const styles = StyleSheet.create({
   stageContainer: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#09080c',
+    backgroundColor: '#07050d',
     alignItems: 'center',
     position: 'relative',
     overflow: 'hidden',
@@ -464,11 +465,16 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#17151a',
+    backgroundColor: 'rgba(18, 14, 24, 0.9)',
     borderWidth: 1,
-    borderColor: 'rgba(206, 178, 117, 0.3)',
+    borderColor: 'rgba(206, 178, 117, 0.35)',
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
+    elevation: 3,
   },
   backArrow: {
     color: '#d7bd82',
@@ -479,13 +485,18 @@ const styles = StyleSheet.create({
   roomStatusPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#141217',
-    paddingHorizontal: 11,
+    backgroundColor: 'rgba(14, 10, 20, 0.92)',
+    paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: 'rgba(206, 178, 117, 0.18)',
+    borderColor: 'rgba(206, 178, 117, 0.22)',
     gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   statusDot: {
     width: 7,
@@ -550,7 +561,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
-  // Projector Cone
+  // Projector Cone — Enhanced Atmospheric Beam
   projectorCone: {
     position: 'absolute',
     top: -20,
@@ -562,7 +573,7 @@ const styles = StyleSheet.create({
     borderTopWidth: SCREEN_HEIGHT + 60,
     borderLeftColor: 'transparent',
     borderRightColor: 'transparent',
-    borderTopColor: 'rgba(255, 248, 220, 0.08)',
+    borderTopColor: 'rgba(255, 248, 220, 0.06)',
     zIndex: 2,
   },
   dustParticle: {
@@ -574,36 +585,41 @@ const styles = StyleSheet.create({
     zIndex: 3,
   },
 
-  // Top Pelmet Curtain
+  // Top Pelmet Curtain — Rich Velvet Drape
   topCurtainPelmet: {
     width: '100%',
-    height: 18,
-    backgroundColor: '#32151f',
+    height: 20,
+    backgroundColor: '#2a0f1a',
     flexDirection: 'row',
     justifyContent: 'space-around',
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(205, 174, 111, 0.62)',
+    borderBottomWidth: 2.5,
+    borderBottomColor: 'rgba(212, 175, 55, 0.7)',
     zIndex: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 6,
   },
   pelmetFold: {
     width: '30%',
     height: '100%',
-    backgroundColor: '#411a28',
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 10,
+    backgroundColor: '#3a1525',
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
   },
   pelmetGoldTrim: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 2,
-    backgroundColor: '#c5a96e',
+    height: 2.5,
+    backgroundColor: '#d4af37',
+    shadowColor: '#d4af37',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   // Cinema Stage Frame
@@ -617,13 +633,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  // Velvet Curtains
+  // Velvet Curtains — Deep Cinematic Red
   curtainLeft: {
     width: SW * 0.05,
     height: '100%',
-    backgroundColor: '#32151f',
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(205, 174, 111, 0.28)',
+    backgroundColor: '#2a0f1a',
+    borderRightWidth: 1.5,
+    borderRightColor: 'rgba(212, 175, 55, 0.35)',
     zIndex: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -631,9 +647,9 @@ const styles = StyleSheet.create({
   curtainRight: {
     width: SW * 0.05,
     height: '100%',
-    backgroundColor: '#32151f',
-    borderLeftWidth: 1,
-    borderLeftColor: 'rgba(205, 174, 111, 0.28)',
+    backgroundColor: '#2a0f1a',
+    borderLeftWidth: 1.5,
+    borderLeftColor: 'rgba(212, 175, 55, 0.35)',
     zIndex: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -654,28 +670,28 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
 
-  // Screen Surface
+  // Screen Surface — Premium Cinema Display
   screenSurface: {
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT,
     backgroundColor: '#000',
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 2,
-    borderColor: 'rgba(205, 174, 111, 0.42)',
+    borderColor: 'rgba(212, 175, 55, 0.5)',
     overflow: 'hidden',
     shadowColor: '#d4af37',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.22,
-    shadowRadius: 14,
-    elevation: 8,
+    shadowOpacity: 0.3,
+    shadowRadius: 18,
+    elevation: 10,
     position: 'relative',
   },
   ambientScreenGlow: {
     position: 'absolute',
-    width: SCREEN_WIDTH * 1.1,
-    height: SCREEN_HEIGHT * 1.1,
+    width: SCREEN_WIDTH * 1.12,
+    height: SCREEN_HEIGHT * 1.12,
     borderRadius: 20,
-    backgroundColor: 'rgba(124, 58, 237, 0.15)',
+    backgroundColor: 'rgba(124, 58, 237, 0.12)',
     zIndex: 1,
   },
   filmCanvas: {
@@ -866,48 +882,57 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 
-  // Film Marquee
+  // Film Marquee — Premium Ticker Bar
   filmMarqueeBar: {
     width: SW * 0.94,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#121016',
-    borderRadius: 12,
-    paddingHorizontal: 11,
-    paddingVertical: 6,
+    backgroundColor: 'rgba(12, 8, 18, 0.95)',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     marginTop: 6,
     borderWidth: 1,
-    borderColor: 'rgba(205, 174, 111, 0.2)',
+    borderColor: 'rgba(212, 175, 55, 0.25)',
     gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 3,
   },
   marqueeBadge: {
-    backgroundColor: 'rgba(205, 174, 111, 0.12)',
-    paddingHorizontal: 7,
+    backgroundColor: 'rgba(212, 175, 55, 0.18)',
+    paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
   },
   marqueeBadgeText: {
-    color: '#d7bd82',
+    color: '#f0d078',
     fontSize: 8,
     fontWeight: '900',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
   },
   marqueeTitle: {
     flex: 1,
     color: '#f4f0e8',
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '600',
   },
   marqueePlayBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(205, 174, 111, 0.12)',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.25)',
   },
   marqueePlayText: {
-    fontSize: 13,
+    fontSize: 14,
   },
 
   // Projector Bar Just Below

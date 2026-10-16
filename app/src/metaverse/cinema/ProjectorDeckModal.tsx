@@ -510,16 +510,16 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxHeight: '85%',
-    backgroundColor: '#120b14',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.35)',
+    backgroundColor: '#0d0810',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
     shadowColor: '#d4af37',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 12,
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 20,
+    elevation: 14,
   },
 
   // Header
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
   headerTitle: {
-    color: '#d4af37',
+    color: '#f0d078',
     fontSize: 15,
     fontWeight: '900',
     letterSpacing: 2,
@@ -551,6 +551,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.5)',
     fontSize: 11,
     fontWeight: '500',
+    marginTop: 1,
   },
   closeBtn: {
     width: 32,
@@ -587,8 +588,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   tabItemActive: {
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    backgroundColor: 'rgba(212, 175, 55, 0.18)',
     borderColor: '#d4af37',
+    shadowColor: '#d4af37',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 2,
   },
   tabEmoji: {
     fontSize: 16,
@@ -605,8 +611,9 @@ const styles = StyleSheet.create({
   tabPill: {
     fontSize: 8,
     fontWeight: '900',
-    color: 'rgba(255, 255, 255, 0.3)',
+    color: 'rgba(255, 255, 255, 0.25)',
     marginTop: 2,
+    letterSpacing: 0.5,
   },
 
   // Body
@@ -869,14 +876,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 
-  // Docked remote
+  // Docked remote — Premium Master Controls
   remoteDock: {
-    backgroundColor: '#0a050a',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(212, 175, 55, 0.2)',
+    backgroundColor: '#080410',
+    borderTopWidth: 1.5,
+    borderTopColor: 'rgba(212, 175, 55, 0.25)',
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 24,
+    paddingTop: 14,
+    paddingBottom: 28,
   },
   remoteTrackInfo: {
     flexDirection: 'row',
@@ -919,6 +926,11 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#d4af37',
     borderRadius: 3,
+    shadowColor: '#d4af37',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 3,
+    elevation: 1,
   },
   remoteButtonsRow: {
     flexDirection: 'row',
@@ -939,20 +951,20 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   remoteMainPlayBtn: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#d4af37',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#d4af37',
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOpacity: 0.7,
+    shadowRadius: 14,
+    elevation: 6,
   },
   remoteMainPlayText: {
-    fontSize: 22,
+    fontSize: 24,
   },
   volumeBtn: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
