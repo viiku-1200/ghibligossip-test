@@ -9,8 +9,8 @@
 // For Android emulator, 10.0.2.2 points to host machine's localhost
 // For physical device on same WiFi, use your laptop's local IP (e.g. 192.168.x.x)
 export const API_CONFIG = {
-  // Change this to your laptop's local IP if testing on a physical phone
-  BASE_URL: 'http://10.0.2.2:5000',
+  // Live Cloud Backend on Render
+  BASE_URL: 'https://ghibligossip-backend.onrender.com',
 
   // Google OAuth Client IDs
   GOOGLE_WEB_CLIENT_ID:
