@@ -4,6 +4,9 @@
 **/yarn-debug.log*
 **/yarn-error.log*
 
+# Backend (tracked in its own repository: ghibligossip-backend)
+backend/
+
 # Android build outputs & cache
 **/android/build/
 **/android/app/build/

@@ -18,11 +18,9 @@ import {
   Easing,
   TouchableOpacity,
   Image,
-  UIManager,
-  Linking,
 } from 'react-native';
-import { WebView } from 'react-native-webview';
-
+import PhoneVideoPlayer from './PhoneVideoPlayer';
+import ScreenSharePlayer from './ScreenSharePlayer';
 import YouTubeTheaterPlayer from './YouTubeTheaterPlayer';
 
 const { width: SW } = Dimensions.get('window');
@@ -30,11 +28,15 @@ const SCREEN_WIDTH = SW * 0.92;
 // Leave at least 200px of inner height for YouTube's embedded player viewport.
 const SCREEN_HEIGHT = Math.max(SCREEN_WIDTH * (9 / 16), 204);
 
+// YouTube playback is handled by the dedicated YouTubeTheaterPlayer component
+// which includes the critical userAgent prop required for Android WebView playback.
+
 export interface CinemaState {
   title: string;
   sourceType: 'file' | 'screenshare' | 'web';
   sourceName: string;
   youtubeId?: string | null;
+  fileUri?: string | null; // file:// or content:// URI for local video
   isPlaying: boolean;
   currentTime: number; // in seconds
   duration: number; // in seconds
@@ -50,6 +52,10 @@ interface Props {
   onTogglePlay: () => void;
   onBack: () => void;
   isHost: boolean;
+  onVideoProgress?: (currentTime: number, duration: number) => void;
+  onVideoLoad?: (duration: number) => void;
+  onVideoEnd?: () => void;
+  onToggleScreenShare?: (enabled: boolean) => void;
 }
 
 export default function CinemaScreenCanvas({
@@ -59,6 +65,10 @@ export default function CinemaScreenCanvas({
   onTogglePlay,
   onBack,
   isHost,
+  onVideoProgress,
+  onVideoLoad,
+  onVideoEnd,
+  onToggleScreenShare,
 }: Props) {
   // Projector beam flicker animation
   const beamOpacity = useRef(new Animated.Value(0.25)).current;
@@ -325,13 +335,53 @@ export default function CinemaScreenCanvas({
               isPlaying={state.isPlaying}
             />
           </View>
+        ) : state.sourceType === 'file' ? (
+          /* ── Real Local Video Playback via react-native-video ── */
+          <TouchableOpacity
+            activeOpacity={0.95}
+            onPress={onTogglePlay}
+            style={styles.screenSurface}
+          >
+            <PhoneVideoPlayer
+              uri={state.fileUri || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'}
+              isPlaying={state.isPlaying}
+              currentTime={state.currentTime}
+              volume={state.volume}
+              onProgress={onVideoProgress}
+              onLoad={onVideoLoad}
+              onEnd={onVideoEnd}
+            />
+            {/* Subtitle Overlay on top of video */}
+            {state.isPlaying && state.subtitle ? (
+              <View style={styles.subtitleContainer}>
+                <Text style={styles.subtitleText}>"{state.subtitle}"</Text>
+              </View>
+            ) : null}
+            {/* Paused Overlay */}
+            {!state.isPlaying && (
+              <View style={styles.pauseOverlay}>
+                <View style={styles.pauseCircle}>
+                  <Text style={styles.pauseIcon}>⏸️</Text>
+                </View>
+                <Text style={styles.pauseText}>PAUSED BY HOST</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        ) : state.sourceType === 'screenshare' ? (
+          /* ── Real-Time Screen Share Display ── */
+          <View style={styles.screenSurface}>
+            <ScreenSharePlayer
+              isActive={true}
+              onToggle={(enabled) => onToggleScreenShare?.(enabled)}
+            />
+          </View>
         ) : (
           <TouchableOpacity
             activeOpacity={0.95}
             onPress={onTogglePlay}
             style={styles.screenSurface}
           >
-            {/* Film Visual Scene */}
+            {/* Film Visual Scene — Fallback for presets without real file */}
             <Animated.View
               style={[
                 styles.filmCanvas,
@@ -347,25 +397,13 @@ export default function CinemaScreenCanvas({
 
                 {/* Central Film Graphic / Artwork */}
                 <View style={styles.filmCenterVisual}>
-                  {state.sourceType === 'screenshare' ? (
-                    <View style={styles.screenShareDisplay}>
-                      <Text style={styles.screenShareIcon}>📱</Text>
-                      <Text style={styles.screenShareTitle}>Host Phone Screen Mirror</Text>
-                      <Text style={styles.screenShareSub}>Broadcasting Android Screen (1080p · 60fps)</Text>
-                      <View style={styles.screenSharePill}>
-                        <View style={styles.livePulseDot} />
-                        <Text style={styles.screenShareStatus}>ACTIVE BROADCAST</Text>
-                      </View>
-                    </View>
-                  ) : (
-                    <View style={styles.movieDisplay}>
-                      <Text style={styles.movieEmoji}>🌌</Text>
-                      <Text style={styles.movieTitleDisplay}>{state.title}</Text>
-                      <Text style={styles.movieSourceInfo}>
-                        {state.sourceType === 'file' ? '⚡ WS Chunks Relay · 1080p' : '🌐 Web Stream · Direct'}
-                      </Text>
-                    </View>
-                  )}
+                  <View style={styles.movieDisplay}>
+                    <Text style={styles.movieEmoji}>🌌</Text>
+                    <Text style={styles.movieTitleDisplay}>{state.title}</Text>
+                    <Text style={styles.movieSourceInfo}>
+                      {(state.sourceType as string) === 'file' ? '⚡ WS Chunks Relay · 1080p' : '🌐 Web Stream · Direct'}
+                    </Text>
+                  </View>
                 </View>
 
                 {/* Subtitle Bar */}

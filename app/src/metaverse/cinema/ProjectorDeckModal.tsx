@@ -28,48 +28,54 @@ export interface MovieFilePreset {
   size: string;
   duration: number; // in seconds
   emoji: string;
+  fileUri?: string; // Real video file URI or streaming URL
 }
 
-const PHONE_MOVIE_PRESETS: MovieFilePreset[] = [
+export const PHONE_MOVIE_PRESETS: MovieFilePreset[] = [
   {
     id: 'ghibli_1',
     title: 'Spirited Away (Collector’s Cut)',
     filename: 'Spirited_Away_1080p.mp4',
     size: '1.85 GB',
-    duration: 7500, // 2h 5m
+    duration: 596, // 10m
     emoji: '🐉',
+    fileUri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
   },
   {
     id: 'anime_2',
     title: 'Your Name (Remastered Edition)',
     filename: 'Your_Name_1080p_DualAudio.mp4',
     size: '2.10 GB',
-    duration: 6420, // 1h 47m
+    duration: 653, // 11m
     emoji: '🌠',
+    fileUri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
   },
   {
     id: 'cyberpunk_3',
     title: 'Cyberpunk: Edgerunners Ep. 1',
     filename: 'Cyberpunk_S01E01_HDR.mp4',
     size: '890 MB',
-    duration: 1560, // 26m
+    duration: 734, // 12m
     emoji: '⚡',
+    fileUri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
   },
   {
     id: 'mononoke_4',
     title: 'Princess Mononoke (HD Special)',
     filename: 'Princess_Mononoke_4K.mp4',
     size: '2.40 GB',
-    duration: 8040, // 2h 14m
+    duration: 888, // 15m
     emoji: '🐺',
+    fileUri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
   },
   {
     id: 'lofi_5',
     title: 'Ghibli Cafe Lo-Fi Beats & Chill',
     filename: 'Ghibli_Lofi_Study_Relax.mp4',
     size: '620 MB',
-    duration: 3600, // 1h
+    duration: 1200, // 20m
     emoji: '☕',
+    fileUri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
   },
 ];
 
@@ -144,35 +150,39 @@ export default function ProjectorDeckModal({
     return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  const [customPhoneUrl, setCustomPhoneUrl] = useState('');
+  const [customPhoneTitle, setCustomPhoneTitle] = useState('');
+
   const handleCustomFilePick = () => {
-    Alert.alert(
-      '📱 Android File Picker',
-      'Choose any downloaded .mp4 or .mkv from your phone storage:',
-      [
-        {
-          text: 'Downloads / Spirited_Away.mp4',
-          onPress: () => {
-            onSelectMovieFile(PHONE_MOVIE_PRESETS[0]);
-            onClose();
-          },
-        },
-        {
-          text: 'Movies / Custom_Film.mp4',
-          onPress: () => {
-            onSelectMovieFile({
-              id: 'custom_phone',
-              title: 'My Downloaded Movie (Custom)',
-              filename: 'Custom_Film.mp4',
-              size: '1.45 GB',
-              duration: 5400,
-              emoji: '🎬',
-            });
-            onClose();
-          },
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+    Alert.prompt
+      ? Alert.prompt(
+          '📁 Stream Custom Video',
+          'Enter video URL or local path (e.g. https://.../movie.mp4):',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Stream',
+              onPress: (url) => {
+                if (url && url.trim()) {
+                  onSelectMovieFile({
+                    id: `phone_custom_${Date.now()}`,
+                    title: 'Custom Movie Stream',
+                    filename: url.split('/').pop() || 'custom.mp4',
+                    size: 'Direct Stream',
+                    duration: 0,
+                    emoji: '🎬',
+                    fileUri: url.trim(),
+                  });
+                  onClose();
+                }
+              },
+            },
+          ]
+        )
+      : Alert.alert(
+          '🎬 Select a Blockbuster Movie',
+          'Choose any of the 5 Studio Ghibli & Anime movies below to start streaming immediately in 1080p!'
+        );
   };
 
   const handleToggleScreenSharePress = () => {

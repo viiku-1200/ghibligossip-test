@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   Dimensions,
   StatusBar,
 } from 'react-native';
+import { getRooms } from '../services/roomService';
+import { connectSocket, onEvent, offEvent } from '../services/socketService';
 
 const { width } = Dimensions.get('window');
 
@@ -119,6 +121,19 @@ const ROOMS = [
     isLive: true,
     themeColor: '#d4af37',
   },
+  {
+    id: 'spinbottle',
+    name: 'Spin The Bottle',
+    emoji: '🍾',
+    type: 'Two-Way Challenger vs Target',
+    description: 'Dual-end bottle picks Challenger & Target! Romantic, Savage Roast or Duo Dare',
+    image: require('./anime_image/dancefloor_2.png'),
+    users: 8,
+    maxUsers: 8,
+    isVip: false,
+    isLive: true,
+    themeColor: '#ff4d6d',
+  },
 ];
 
 // Fake user avatars for the user count display
@@ -126,17 +141,54 @@ const AVATAR_COLORS = ['#d4af37', '#a855f7', '#00e5ff', '#ff6b6b', '#4ade80'];
 const AVATAR_INITIALS = ['L', 'S', 'V'];
 
 interface RoomListScreenProps {
-  onJoinRoom: (roomId: string, roomName: string) => void;
+  onJoinRoom: (roomId: string, roomName: string, roomData?: any) => void;
+  onCreateRoom?: () => void;
   onBack: () => void;
 }
 
-export default function RoomListScreen({ onJoinRoom, onBack }: RoomListScreenProps) {
+export default function RoomListScreen({ onJoinRoom, onCreateRoom, onBack }: RoomListScreenProps) {
+  const [liveRooms, setLiveRooms] = useState<any[]>([]);
   const fadeAnims = useRef(ROOMS.map(() => new Animated.Value(0))).current;
   const slideAnims = useRef(ROOMS.map(() => new Animated.Value(40))).current;
   const scaleAnims = useRef(ROOMS.map(() => new Animated.Value(0.95))).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const headerFade = useRef(new Animated.Value(0)).current;
   const liveGlow = useRef(new Animated.Value(0.4)).current;
+
+  // ── Fetch dynamic real-time rooms & listen to socket events ──
+  useEffect(() => {
+    connectSocket();
+
+    const fetchRooms = async () => {
+      try {
+        const res = await getRooms();
+        if (res.success && res.rooms) {
+          setLiveRooms(res.rooms);
+        }
+      } catch (err) {}
+    };
+
+    fetchRooms();
+
+    const onRoomCreated = (room: any) => {
+      setLiveRooms(prev => {
+        if (prev.some(r => r._id === room._id)) return prev;
+        return [room, ...prev];
+      });
+    };
+
+    const onRoomClosed = (data: any) => {
+      setLiveRooms(prev => prev.filter(r => r._id !== data.roomId));
+    };
+
+    onEvent('room-created', onRoomCreated);
+    onEvent('room-closed', onRoomClosed);
+
+    return () => {
+      offEvent('room-created', onRoomCreated);
+      offEvent('room-closed', onRoomClosed);
+    };
+  }, []);
 
   useEffect(() => {
     // Header entrance
@@ -197,7 +249,7 @@ export default function RoomListScreen({ onJoinRoom, onBack }: RoomListScreenPro
           <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>GALAVERSE</Text>
+          <Text style={styles.headerTitle}>GHIBLIGOSSIP</Text>
           <View style={styles.headerAccent} />
         </View>
         <View style={styles.headerRight}>
@@ -214,6 +266,63 @@ export default function RoomListScreen({ onJoinRoom, onBack }: RoomListScreenPro
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* ── Real-Time Community Live Voice Rooms ── */}
+        {liveRooms.length > 0 && (
+          <View style={styles.communitySection}>
+            <View style={styles.communitySectionHeader}>
+              <View style={styles.livePulseDot} />
+              <Text style={styles.communitySectionTitle}>LIVE COMMUNITY STAGES</Text>
+              <View style={styles.communityCountBadge}>
+                <Text style={styles.communityCountText}>{liveRooms.length} LIVE</Text>
+              </View>
+            </View>
+
+            {liveRooms.map(room => {
+              const theme = room.themeColor || '#7c4dff';
+              const pCount = room.participants?.length || 1;
+              const hostName = room.host?.name || 'Ghibli Host';
+
+              return (
+                <View key={room._id} style={[styles.communityCard, { borderColor: theme + '60' }]}>
+                  <View style={styles.communityCardTop}>
+                    <View style={[styles.communityTypeTag, { backgroundColor: theme + '20', borderColor: theme }]}>
+                      <Text style={[styles.communityTypeText, { color: theme }]}>
+                        {room.type?.toUpperCase() || 'CHAT'}
+                      </Text>
+                    </View>
+                    <View style={styles.communityHostTag}>
+                      <Text style={styles.communityHostText}>👑 {hostName}</Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.communityRoomTitle}>{room.name}</Text>
+                  {room.description ? (
+                    <Text style={styles.communityRoomDesc} numberOfLines={2}>
+                      {room.description}
+                    </Text>
+                  ) : null}
+
+                  <View style={styles.communityCardFooter}>
+                    <Text style={styles.communityMemberCount}>👥 {pCount} online</Text>
+                    <TouchableOpacity
+                      style={[styles.communityJoinBtn, { backgroundColor: theme }]}
+                      onPress={() => onJoinRoom(room._id, room.name, room)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.communityJoinBtnText}>JOIN STAGE 🎙️</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* ── Metaverse Showcase Stages Header ── */}
+        <View style={styles.metaverseSectionHeader}>
+          <Text style={styles.metaverseSectionTitle}>✦ METAVERSE WORLDS ✦</Text>
+        </View>
+
         {ROOMS.map((room, index) => (
           <Animated.View
             key={room.id}
@@ -326,6 +435,24 @@ export default function RoomListScreen({ onJoinRoom, onBack }: RoomListScreenPro
         <View style={{ height: 100 }} />
       </ScrollView>
 
+      {/* Floating Create Room Button */}
+      {onCreateRoom && (
+        <TouchableOpacity
+          style={{
+            position: 'absolute', bottom: 90, right: 20,
+            width: 56, height: 56, borderRadius: 28,
+            backgroundColor: '#7c4dff', alignItems: 'center', justifyContent: 'center',
+            shadowColor: '#7c4dff', shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.5, shadowRadius: 12, elevation: 10,
+            zIndex: 100,
+          }}
+          onPress={onCreateRoom}
+          activeOpacity={0.8}
+        >
+          <Text style={{ fontSize: 28, color: '#fff', marginTop: -2 }}>+</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Premium Bottom Tab Bar */}
       <View style={styles.tabBar}>
         <TouchableOpacity style={styles.tab} onPress={onBack}>
@@ -398,7 +525,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 10,
   },
   headerAccent: {
-    width: 40,
+    width: 55,
     height: 2,
     backgroundColor: '#d4af37',
     marginTop: 6,
@@ -704,5 +831,131 @@ const styles = StyleSheet.create({
   },
   tabLabelActive: {
     color: '#d4af37',
+  },
+
+  // Community Voice Stages Styles
+  communitySection: {
+    marginHorizontal: 16,
+    marginBottom: 24,
+  },
+  communitySectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  livePulseDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ff3344',
+    marginRight: 8,
+  },
+  communitySectionTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#ff4455',
+    letterSpacing: 2,
+    flex: 1,
+  },
+  communityCountBadge: {
+    backgroundColor: 'rgba(255, 51, 68, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 51, 68, 0.4)',
+  },
+  communityCountText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#ff4455',
+  },
+  communityCard: {
+    backgroundColor: '#121124',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1.5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  communityCardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  communityTypeTag: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  communityTypeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  communityHostTag: {
+    backgroundColor: 'rgba(212, 175, 55, 0.12)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+  },
+  communityHostText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#d4af37',
+  },
+  communityRoomTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  communityRoomDesc: {
+    fontSize: 13,
+    color: '#999',
+    lineHeight: 18,
+    marginBottom: 12,
+  },
+  communityCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  communityMemberCount: {
+    fontSize: 12,
+    color: '#777',
+    fontWeight: '600',
+  },
+  communityJoinBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  communityJoinBtnText: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#fff',
+    letterSpacing: 0.5,
+  },
+
+  // Metaverse Worlds section header
+  metaverseSectionHeader: {
+    alignItems: 'center',
+    marginVertical: 14,
+  },
+  metaverseSectionTitle: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: 'rgba(212, 175, 55, 0.6)',
+    letterSpacing: 3,
   },
 });

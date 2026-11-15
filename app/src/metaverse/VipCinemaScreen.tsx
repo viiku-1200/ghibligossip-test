@@ -150,9 +150,10 @@ export default function VipCinemaScreen({ onBack }: Props) {
     title: 'Spirited Away (Collector\'s Cut)',
     sourceType: 'file',
     sourceName: 'Spirited_Away_1080p.mp4 (Option 3 WS Relay)',
+    fileUri: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     isPlaying: true,
-    currentTime: 864, // 14m 24s
-    duration: 7500, // 2h 5m
+    currentTime: 0,
+    duration: 596,
     volume: 0.85,
     isCinemaDimmed: false,
     subtitle: SUBTITLE_PRESETS[0],
@@ -174,8 +175,12 @@ export default function VipCinemaScreen({ onBack }: Props) {
   const reactionIdCounter = useRef(1);
 
   // Auto-progress film time and cycle subtitles when playing
+  // Only runs for preset movies (no fileUri) — real files use react-native-video progress
   useEffect(() => {
     if (!cinemaState.isPlaying) return;
+    // Skip auto-progress when we have a real file or YouTube playing
+    if (cinemaState.fileUri || (cinemaState.sourceType === 'web' && cinemaState.youtubeId)) return;
+    if (cinemaState.sourceType === 'screenshare') return;
 
     const interval = setInterval(() => {
       setCinemaState((prev) => {
@@ -190,7 +195,7 @@ export default function VipCinemaScreen({ onBack }: Props) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [cinemaState.isPlaying]);
+  }, [cinemaState.isPlaying, cinemaState.fileUri, cinemaState.sourceType, cinemaState.youtubeId]);
 
   // Spawn floating reactions (popcorn, soda, emojis)
   const spawnReaction = useCallback((emoji: string, isPopcorn = false) => {
@@ -261,19 +266,21 @@ export default function VipCinemaScreen({ onBack }: Props) {
 
   // Select Downloaded Movie File (Option 3)
   const handleSelectMovieFile = (movie: MovieFilePreset) => {
+    const videoUri = movie.fileUri || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4';
     setCinemaState((prev) => ({
       ...prev,
       title: movie.title,
       sourceType: 'file',
-      sourceName: `${movie.filename} (WS Relay)`,
+      sourceName: `${movie.filename} (1080p Stream)`,
       youtubeId: null,
-      duration: movie.duration,
+      fileUri: videoUri,
+      duration: movie.duration || 596,
       currentTime: 0,
       isPlaying: true,
     }));
     Alert.alert(
       '🎬 Screening Started',
-      `Now streaming "${movie.title}" via pure WebSocket Chunk Relay to all 15 viewers!`,
+      `Now playing "${movie.title}" in 1080p real-time stream to all 15 viewers!`,
       [{ text: 'Watch Now' }]
     );
   };
@@ -285,7 +292,7 @@ export default function VipCinemaScreen({ onBack }: Props) {
         ...prev,
         title: 'Host Android Screen Share',
         sourceType: 'screenshare',
-        sourceName: 'MediaProjection Live (1080p · 60fps)',
+        sourceName: 'Screen Mirror Live (1080p · 60fps)',
         youtubeId: null,
         isPlaying: true,
       }));
@@ -296,6 +303,8 @@ export default function VipCinemaScreen({ onBack }: Props) {
         sourceType: 'file',
         sourceName: 'Spirited_Away_1080p.mp4',
         youtubeId: null,
+        fileUri: prev.fileUri || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+        isPlaying: true,
       }));
     }
   };
@@ -353,6 +362,25 @@ export default function VipCinemaScreen({ onBack }: Props) {
           onTogglePlay={handleTogglePlay}
           onBack={onBack}
           isHost={true}
+          onVideoProgress={(currentTime, duration) => {
+            setCinemaState((prev) => {
+              const subIndex = Math.floor(currentTime / 5) % SUBTITLE_PRESETS.length;
+              return {
+                ...prev,
+                currentTime,
+                duration: duration || prev.duration,
+                subtitle: SUBTITLE_PRESETS[subIndex],
+              };
+            });
+          }}
+          onVideoLoad={(duration) => {
+            setCinemaState((prev) => ({ ...prev, duration }));
+          }}
+          onVideoEnd={() => {
+            setCinemaState((prev) => ({ ...prev, isPlaying: false, currentTime: 0 }));
+            Alert.alert('🎬 Film Ended', 'The movie has finished. Choose another film from the Projector Deck!');
+          }}
+          onToggleScreenShare={handleToggleScreenShare}
         />
       </View>
 
@@ -386,13 +414,26 @@ export default function VipCinemaScreen({ onBack }: Props) {
             cinemaState.sourceType === 'file' && styles.projectorDividerBtnActive,
           ]}
           onPress={() => {
-            setProjectorInitialTab('file');
-            setIsDeckVisible(true);
+            if (cinemaState.sourceType !== 'file') {
+              setCinemaState((prev) => ({
+                ...prev,
+                title: 'Spirited Away (Collector\'s Cut)',
+                sourceType: 'file',
+                sourceName: 'Spirited_Away_1080p.mp4 (1080p Stream)',
+                fileUri: prev.fileUri || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+                isPlaying: true,
+              }));
+            } else {
+              setProjectorInitialTab('file');
+              setIsDeckVisible(true);
+            }
           }}
           activeOpacity={0.7}
         >
           <Text style={styles.projectorDividerEmoji}>📱</Text>
-          <Text style={styles.projectorDividerText}>Phone</Text>
+          <Text style={[styles.projectorDividerText, cinemaState.sourceType === 'file' && styles.projectorDividerTextActive]}>
+            Phone
+          </Text>
         </TouchableOpacity>
 
         {/* Button 3: Android Screen Share */}
@@ -405,7 +446,7 @@ export default function VipCinemaScreen({ onBack }: Props) {
           activeOpacity={0.7}
         >
           <Text style={styles.projectorDividerEmoji}>📺</Text>
-          <Text style={styles.projectorDividerText}>
+          <Text style={[styles.projectorDividerText, cinemaState.sourceType === 'screenshare' && styles.projectorDividerTextActive]}>
             {cinemaState.sourceType === 'screenshare' ? 'Live 🔴' : 'Screen'}
           </Text>
         </TouchableOpacity>
@@ -787,6 +828,10 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.78)',
     fontSize: 10,
     fontWeight: '800',
+  },
+  projectorDividerTextActive: {
+    color: '#fef08a',
+    fontWeight: '900',
   },
   projectorDeckSquareBtn: {
     width: 44,

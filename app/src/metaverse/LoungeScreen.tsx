@@ -14,6 +14,19 @@ import {
     Dimensions,
 } from 'react-native';
 
+// ── Real-time services ──
+import {
+    getSocket,
+    joinRoom as socketJoinRoom,
+    leaveRoom as socketLeaveRoom,
+    sendMessage as socketSendMessage,
+    sendGift as socketSendGift,
+    sendReaction as socketSendReaction,
+    onEvent,
+    offEvent,
+} from '../services/socketService';
+import { getCurrentUser } from '../services/authService';
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Dummy users to simulate chat
@@ -61,7 +74,9 @@ export default function LoungeScreen({ roomId, onBack }: LoungeScreenProps) {
     const [inputText, setInputText] = useState('');
     const [showGifts, setShowGifts] = useState(false);
     const [flyingGift, setFlyingGift] = useState<{ id: number; emoji: string } | null>(null);
+    const [participantCount, setParticipantCount] = useState(0);
     const flatListRef = useRef<FlatList>(null);
+    const currentUser = getCurrentUser();
 
     // Animations
     const giftY = useRef(new Animated.Value(0)).current;
@@ -106,31 +121,124 @@ export default function LoungeScreen({ roomId, onBack }: LoungeScreenProps) {
         animateSparkle(sparkle3, 1600);
     }, []);
 
-    // Auto-playing fake chat messages
+    // ═══════════════════════════════════════════
+    // ── REAL-TIME SOCKET.IO CHAT ──
+    // ═══════════════════════════════════════════
     useEffect(() => {
-        let messageCount = 0;
-        const interval = setInterval(() => {
-            if (messageCount > 10) return;
+        const socket = getSocket();
+        const userData = currentUser
+            ? { _id: currentUser._id, name: currentUser.name, avatar: currentUser.avatar }
+            : { name: 'Guest', avatar: '' };
 
-            const randomUser = BOT_USERS[Math.floor(Math.random() * BOT_USERS.length)];
-            const randomText = BOT_MESSAGES[Math.floor(Math.random() * BOT_MESSAGES.length)];
+        // Join the room via Socket.IO
+        if (socket?.connected) {
+            socketJoinRoom(roomId, userData);
+        }
 
+        // ── Listen for real-time messages ──
+        const handleMessage = (msg: any) => {
             const newMessage: ChatMessage = {
-                id: Date.now().toString(),
-                sender: randomUser.name,
-                isVip: randomUser.isVip,
-                color: randomUser.color,
-                initial: randomUser.initial,
-                text: randomText,
+                id: msg.timestamp || Date.now().toString(),
+                sender: msg.senderName || msg.sender || 'Unknown',
+                isVip: msg.isVip || false,
+                color: msg.color || '#a855f7',
+                initial: (msg.senderName || msg.sender || 'U')[0].toUpperCase(),
+                text: msg.text || msg.message || '',
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             };
-
             setMessages(prev => [...prev, newMessage]);
-            messageCount++;
-        }, 4000);
+        };
 
-        return () => clearInterval(interval);
-    }, []);
+        // ── Listen for user join/leave ──
+        const handleUserJoined = (data: any) => {
+            if (data.participantCount) setParticipantCount(data.participantCount);
+            const sysMsg: ChatMessage = {
+                id: Date.now().toString(),
+                sender: 'System',
+                isVip: false,
+                color: '#4ade80',
+                initial: '✦',
+                text: `${data.user?.name || 'Someone'} joined the room ✨`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            };
+            setMessages(prev => [...prev, sysMsg]);
+        };
+
+        const handleUserLeft = (data: any) => {
+            if (data.participantCount) setParticipantCount(data.participantCount);
+            const sysMsg: ChatMessage = {
+                id: Date.now().toString(),
+                sender: 'System',
+                isVip: false,
+                color: '#666',
+                initial: '✦',
+                text: `${data.user?.name || 'Someone'} left the room`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            };
+            setMessages(prev => [...prev, sysMsg]);
+        };
+
+        // ── Listen for room state ──
+        const handleRoomState = (data: any) => {
+            if (data.participantCount) setParticipantCount(data.participantCount);
+        };
+
+        // ── Listen for real-time gifts ──
+        const handleGift = (data: any) => {
+            const sysMsg: ChatMessage = {
+                id: Date.now().toString(),
+                sender: 'System',
+                isVip: false,
+                color: '#d4af37',
+                initial: '🎁',
+                text: `${data.senderName || 'Someone'} sent ${data.emoji || '🎁'} to ${data.targetName || 'the room'}!`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            };
+            setMessages(prev => [...prev, sysMsg]);
+        };
+
+        // Register listeners
+        onEvent('room-message', handleMessage);
+        onEvent('user-joined', handleUserJoined);
+        onEvent('user-left', handleUserLeft);
+        onEvent('room-state', handleRoomState);
+        onEvent('room-gift', handleGift);
+
+        // Fallback: if socket not connected, show bot messages
+        let botInterval: any = null;
+        if (!socket?.connected) {
+            let messageCount = 0;
+            botInterval = setInterval(() => {
+                if (messageCount > 10) return;
+                const randomUser = BOT_USERS[Math.floor(Math.random() * BOT_USERS.length)];
+                const randomText = BOT_MESSAGES[Math.floor(Math.random() * BOT_MESSAGES.length)];
+                const newMessage: ChatMessage = {
+                    id: Date.now().toString(),
+                    sender: randomUser.name,
+                    isVip: randomUser.isVip,
+                    color: randomUser.color,
+                    initial: randomUser.initial,
+                    text: randomText,
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                };
+                setMessages(prev => [...prev, newMessage]);
+                messageCount++;
+            }, 4000);
+        }
+
+        // Cleanup: leave room and remove listeners
+        return () => {
+            if (socket?.connected) {
+                socketLeaveRoom(roomId, userData);
+            }
+            offEvent('room-message', handleMessage);
+            offEvent('user-joined', handleUserJoined);
+            offEvent('user-left', handleUserLeft);
+            offEvent('room-state', handleRoomState);
+            offEvent('room-gift', handleGift);
+            if (botInterval) clearInterval(botInterval);
+        };
+    }, [roomId]);
 
     // Scroll to bottom on new message
     useEffect(() => {
@@ -141,15 +249,31 @@ export default function LoungeScreen({ roomId, onBack }: LoungeScreenProps) {
         }
     }, [messages]);
 
+    // ── Send message (real-time via Socket.IO) ──
     const sendMessage = () => {
         if (!inputText.trim()) return;
 
+        const messageData = {
+            sender: currentUser?.name || 'You',
+            senderName: currentUser?.name || 'You',
+            isVip: currentUser?.vipTier !== 'NONE',
+            color: '#fff',
+            text: inputText.trim(),
+        };
+
+        // Send via Socket.IO (broadcasts to all in room)
+        const socket = getSocket();
+        if (socket?.connected) {
+            socketSendMessage(roomId, messageData);
+        }
+
+        // Show locally immediately
         const newMessage: ChatMessage = {
             id: Date.now().toString(),
             sender: 'You',
             isVip: false,
             color: '#fff',
-            initial: 'Y',
+            initial: (currentUser?.name || 'Y')[0].toUpperCase(),
             text: inputText.trim(),
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
@@ -160,6 +284,16 @@ export default function LoungeScreen({ roomId, onBack }: LoungeScreenProps) {
 
     const sendGift = (emoji: string) => {
         setShowGifts(false);
+
+        // Broadcast gift via Socket.IO
+        const socket = getSocket();
+        if (socket?.connected) {
+            socketSendGift(roomId, {
+                senderName: currentUser?.name || 'You',
+                emoji,
+                targetName: 'the room',
+            });
+        }
 
         // Set up flying gift with scale animation
         setFlyingGift({ id: Date.now(), emoji });

@@ -186,13 +186,13 @@ export default function GalaVerseEntryScreen({
             <Animated.View style={[styles.crestLine, { width: ornamentLineWidth }]} />
           </Animated.View>
 
-          {/* ── GALAVERSE Title ── */}
+          {/* ── GHIBLIGOSSIP Title ── */}
           <View style={styles.titleWrap}>
             {/* Radial halo glow */}
             <Animated.View style={[styles.titleHalo, { opacity: titleGlowOpacity }]} />
             {/* Background glow behind text */}
             <Animated.View style={[styles.titleBackGlow, { opacity: titleGlowOpacity }]} />
-            <Text style={styles.titleText}>GALAVERSE</Text>
+            <Text style={styles.titleText}>GHIBLIGOSSIP</Text>
             {/* Underline accent */}
             <Animated.View style={[styles.titleUnderline, { opacity: ornamentFade }]} />
           </View>
@@ -433,10 +433,10 @@ const styles = StyleSheet.create({
   },
   titleText: {
     color: GOLD_LIGHT,
-    fontSize: 44,
+    fontSize: 34,
     fontFamily: Platform.select({ ios: 'Georgia', android: 'serif' }),
     fontWeight: '400',
-    letterSpacing: 10,
+    letterSpacing: 6,
     textAlign: 'center',
     // Rich gold glow — layered
     textShadowColor: 'rgba(240, 208, 128, 0.9)',
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 30,
   },
   titleUnderline: {
-    width: width * 0.35,
+    width: width * 0.45,
     height: 1.5,
     backgroundColor: GOLD_WARM,
     marginTop: 8,

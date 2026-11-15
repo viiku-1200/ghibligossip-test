@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -14,6 +14,17 @@ import {
 } from 'react-native';
 
 import AudienceController from './galaverse/AudienceController';
+
+// ── Real-time services ──
+import {
+    getSocket,
+    joinRoom as socketJoinRoom,
+    leaveRoom as socketLeaveRoom,
+    sendMessage as socketSendMessage,
+    onEvent,
+    offEvent,
+} from '../services/socketService';
+import { getCurrentUser } from '../services/authService';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -54,6 +65,72 @@ export default function MainLobbyScreen({ onBack, onShowRooms }: { onBack: () =>
     const [message, setMessage] = useState('');
     const [chat, setChat] = useState(BOT_MESSAGES);
     const flatListRef = useRef<FlatList>(null);
+    const currentUser = getCurrentUser();
+
+    // ── Real-time Socket.IO lobby chat ──
+    useEffect(() => {
+        const socket = getSocket();
+        const userData = {
+            _id: currentUser?._id,
+            name: currentUser?.name || 'Guest',
+            avatar: currentUser?.avatar || '',
+        };
+
+        if (socket?.connected) {
+            socketJoinRoom('main-lobby', userData);
+        }
+
+        const handleMessage = (msg: any) => {
+            if (msg.socketId === socket?.id) return;
+            setChat(prev => [...prev, {
+                id: Date.now().toString(),
+                sender: msg.senderName || msg.sender || 'Unknown',
+                text: msg.text || msg.message || '',
+            }]);
+        };
+
+        const handleUserJoined = (data: any) => {
+            setChat(prev => [...prev, {
+                id: Date.now().toString(),
+                sender: 'System',
+                text: `${data.user?.name || 'Someone'} entered the lobby ✨`,
+            }]);
+        };
+
+        onEvent('room-message', handleMessage);
+        onEvent('user-joined', handleUserJoined);
+
+        return () => {
+            if (socket?.connected) socketLeaveRoom('main-lobby', userData);
+            offEvent('room-message', handleMessage);
+            offEvent('user-joined', handleUserJoined);
+        };
+    }, []);
+
+    // Auto-scroll on new message
+    useEffect(() => {
+        if (chat.length > 0) {
+            setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+        }
+    }, [chat]);
+
+    const handleSend = () => {
+        if (!message.trim()) return;
+        const socket = getSocket();
+        if (socket?.connected) {
+            socketSendMessage('main-lobby', {
+                sender: currentUser?.name || 'You',
+                senderName: currentUser?.name || 'You',
+                text: message.trim(),
+            });
+        }
+        setChat(prev => [...prev, {
+            id: Date.now().toString(),
+            sender: 'You',
+            text: message.trim(),
+        }]);
+        setMessage('');
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -91,7 +168,6 @@ export default function MainLobbyScreen({ onBack, onShowRooms }: { onBack: () =>
                                     { left: avatar.x - (avatar.size / 2), top: avatar.y }
                                 ]}
                             >
-                                {/* We use the 'auto' mode so they just breathe and blink normally */}
                                 <AudienceController mode="auto" size={avatar.size} />
                             </View>
                         ))}
@@ -119,8 +195,10 @@ export default function MainLobbyScreen({ onBack, onShowRooms }: { onBack: () =>
                             placeholderTextColor="#888"
                             value={message}
                             onChangeText={setMessage}
+                            onSubmitEditing={handleSend}
+                            returnKeyType="send"
                         />
-                        <TouchableOpacity style={styles.sendBtn}>
+                        <TouchableOpacity style={styles.sendBtn} onPress={handleSend}>
                             <Text style={styles.sendBtnText}>SEND</Text>
                         </TouchableOpacity>
                     </View>
